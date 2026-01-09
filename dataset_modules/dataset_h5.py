@@ -49,6 +49,7 @@ class Whole_Slide_Bag_FP(Dataset):
 	def __init__(self,
 		file_path,
 		wsi,
+		slide_path,
 		img_transforms=None):
 		"""
 		Args:
