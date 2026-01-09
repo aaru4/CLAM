@@ -3,6 +3,7 @@ import os
 import argparse
 import pdb
 from functools import partial
+import openslide
 
 import torch
 import torch.nn as nn
@@ -96,10 +97,16 @@ if __name__ == '__main__':
 
 		output_path = os.path.join(args.feat_dir, 'h5_files', bag_name)
 		time_start = time.time()
-		wsi = openslide.open_slide(slide_file_path)
+		wsi = openslide.open_slide(os.path.realpath(slide_file_path))
+		slide_path=os.path.realpath(slide_file_path)
 		dataset = Whole_Slide_Bag_FP(file_path=h5_file_path, 
 							   		 wsi=wsi, 
 									 img_transforms=img_transforms)
+
+		def worker_init_fn(worker_id):
+		    worker_info = torch.utils.data.get_worker_info()
+		    dataset = worker_info.dataset
+		    dataset.wsi = openslide.OpenSlide(dataset.slide_path)
 
 		loader = DataLoader(dataset=dataset, batch_size=args.batch_size, **loader_kwargs)
 		output_file_path = compute_w_loader(output_path, loader = loader, model = model, verbose = 1)
