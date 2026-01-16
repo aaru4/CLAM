@@ -104,7 +104,7 @@ if __name__ == '__main__':
 									 img_transforms=img_transforms)
 
 		def worker_init_fn(worker_id):
-		    worker_info = torch.utils.data.get_worker_info()
+            worker_info = torch.utils.data.get_worker_info()
 		    dataset = worker_info.dataset
 		    dataset.wsi = openslide.OpenSlide(dataset.slide_path)
 
