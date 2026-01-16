@@ -105,8 +105,8 @@ if __name__ == '__main__':
 
         def worker_init_fn(worker_id):
             worker_info = torch.utils.data.get_worker_info()
-	        dataset = worker_info.dataset
-	        dataset.wsi = openslide.OpenSlide(dataset.slide_path)
+            dataset = worker_info.dataset
+            dataset.wsi = openslide.OpenSlide(dataset.slide_path)
 
 		loader = DataLoader(dataset=dataset, batch_size=args.batch_size, **loader_kwargs)
 		output_file_path = compute_w_loader(output_path, loader = loader, model = model, verbose = 1)
