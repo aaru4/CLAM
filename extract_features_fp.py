@@ -105,7 +105,8 @@ if __name__ == '__main__':
 		slide_path=os.path.realpath(slide_file_path)
 		dataset = Whole_Slide_Bag_FP(file_path=h5_file_path, 
 							   		 wsi=wsi, 
-									 img_transforms=img_transforms)
+									 img_transforms=img_transforms,
+									 slide_path=slide_path)
 
 		loader = DataLoader(dataset=dataset, batch_size=args.batch_size, worker_init_fn=worker_init_fn, **loader_kwargs)
 		output_file_path = compute_w_loader(output_path, loader = loader, model = model, verbose = 1)
