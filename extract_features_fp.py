@@ -61,6 +61,10 @@ parser.add_argument('--no_auto_skip', default=False, action='store_true')
 parser.add_argument('--target_patch_size', type=int, default=224)
 args = parser.parse_args()
 
+def worker_init_fn(worker_id):
+	worker_info = torch.utils.data.get_worker_info()
+	dataset = worker_info.dataset
+	dataset.wsi = openslide.OpenSlide(dataset.slide_path)
 
 if __name__ == '__main__':
 	print('initializing dataset')
@@ -103,12 +107,7 @@ if __name__ == '__main__':
 							   		 wsi=wsi, 
 									 img_transforms=img_transforms)
 
-        def worker_init_fn(worker_id):
-            worker_info = torch.utils.data.get_worker_info()
-            dataset = worker_info.dataset
-            dataset.wsi = openslide.OpenSlide(dataset.slide_path)
-
-		loader = DataLoader(dataset=dataset, batch_size=args.batch_size, **loader_kwargs)
+		loader = DataLoader(dataset=dataset, batch_size=args.batch_size, worker_init_fn=worker_init_fn, **loader_kwargs)
 		output_file_path = compute_w_loader(output_path, loader = loader, model = model, verbose = 1)
 
 		time_elapsed = time.time() - time_start
@@ -122,6 +121,3 @@ if __name__ == '__main__':
 		features = torch.from_numpy(features)
 		bag_base, _ = os.path.splitext(bag_name)
 		torch.save(features, os.path.join(args.feat_dir, 'pt_files', bag_base+'.pt'))
-
-
-
