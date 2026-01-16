@@ -57,6 +57,7 @@ class Whole_Slide_Bag_FP(Dataset):
 			img_transforms (callable, optional): Optional transform to be applied on a sample
 		"""
 		self.wsi = wsi
+		self.slide_path = slide_path
 		self.roi_transforms = img_transforms
 
 		self.file_path = file_path
