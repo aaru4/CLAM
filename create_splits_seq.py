@@ -32,7 +32,7 @@ if args.task == 'task_1_tumor_vs_normal':
 
 elif args.task == 'task_2_tumor_subtyping':
     args.n_classes=3
-    dataset = Generic_WSI_Classification_Dataset(csv_path = '/home/jupyter/her2low_cohort_extracted_clean.csv',,
+    dataset = Generic_WSI_Classification_Dataset(csv_path = '/home/jupyter/her2low_cohort_extracted_clean.csv',
                             shuffle = False, 
                             seed = args.seed, 
                             print_info = True,
