@@ -174,7 +174,7 @@ elif args.task == 'task_2_tumor_subtyping':
                             patient_strat= False,
                             ignore=[])
 
-if args.task == 'task_3_prog_vs_noprog':
+elif args.task == 'task_3_prog_vs_noprog':
     args.n_classes=2
     dataset = Generic_MIL_Dataset(csv_path = '/home/jupyter/her2low_cohort_for_clam.csv',
                             data_dir= args.data_root_dir,
