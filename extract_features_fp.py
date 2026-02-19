@@ -101,7 +101,11 @@ if __name__ == '__main__':
 
 		output_path = os.path.join(args.feat_dir, 'h5_files', bag_name)
 		time_start = time.time()
-		wsi = openslide.open_slide(os.path.realpath(slide_file_path))
+		try:
+			wsi = openslide.open_slide(os.path.realpath(slide_file_path))
+		except Exception as e:
+			print(f'ERROR opening slide {slide_id}: {e}, skipping...')
+			continue
 		slide_path=os.path.realpath(slide_file_path)
 		dataset = Whole_Slide_Bag_FP(file_path=h5_file_path, 
 							   		 wsi=wsi, 
