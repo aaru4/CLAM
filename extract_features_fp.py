@@ -107,6 +107,15 @@ if __name__ == '__main__':
 			print(f'ERROR opening slide {slide_id}: {e}, skipping...')
 			continue
 		slide_path=os.path.realpath(slide_file_path)
+		try:
+			dataset = Whole_Slide_Bag_FP(file_path=h5_file_path, 
+								   		 wsi=wsi, 
+										 img_transforms=img_transforms,
+										 slide_path=slide_path)
+		except Exception as e:
+			print(f'ERROR loading patches for {slide_id}: {e}, skipping...')
+			continue
+		slide_path=os.path.realpath(slide_file_path)
 		dataset = Whole_Slide_Bag_FP(file_path=h5_file_path, 
 							   		 wsi=wsi, 
 									 img_transforms=img_transforms,
