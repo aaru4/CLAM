@@ -200,6 +200,18 @@ elif args.task == 'task_4_survival_binned':
         patient_strat = False,
         ignore        = []
     )
+elif args.task == 'task_5_survival_nll':
+    args.n_classes = 4
+    dataset = Generic_MIL_Dataset(
+        csv_path      = args.survival_csv,
+        data_dir      = args.data_root_dir,
+        shuffle       = False,
+        seed          = args.seed,
+        print_info    = True,
+        label_dict    = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7},
+        patient_strat = False,
+        ignore        = []
+    )
         
 else:
     raise NotImplementedError
