@@ -120,6 +120,11 @@ def train(datasets, cur, args):
         loss_fn = SmoothTop1SVM(n_classes = args.n_classes)
         if device.type == 'cuda':
             loss_fn = loss_fn.cuda()
+    elif args.bag_loss == 'survival_ce':
+        label encodes both bin and event: label = bin * 2 + event
+        survival_bin = label // 2
+        event = label % 2
+        loss = survival_ce_loss(logits, survival_bin, event)
     else:
         loss_fn = nn.CrossEntropyLoss()
     print('Done!')
