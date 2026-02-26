@@ -125,6 +125,10 @@ def train(datasets, cur, args):
         survival_bin = label // 2
         event = label % 2
         loss = survival_ce_loss(logits, survival_bin, event)
+    elif args.bag_loss == 'survival_nll':
+        survival_bin = label // 2
+        event = label % 2
+        loss = survival_nll_loss(logits, survival_bin, event)
     else:
         loss_fn = nn.CrossEntropyLoss()
     print('Done!')
