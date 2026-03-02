@@ -9,7 +9,7 @@ import math
 from utils.file_utils import save_pkl, load_pkl
 from utils.utils import *
 from utils.core_utils import train
-from dataset_modules.dataset_generic import Generic_WSI_Classification_Dataset, Generic_MIL_Dataset
+from dataset_modules.dataset_generic import Generic_WSI_Classification_Dataset, Generic_MIL_Dataset, Generic_MIL_Survival_Dataset
 
 # pytorch imports
 import torch
@@ -188,29 +188,26 @@ elif args.task == 'task_3_prog_vs_noprog':
                             patient_strat=False,
                             ignore=[]) 
 
-elif args.task == 'task_4_survival_binned':
+elif args.task == 'task_4_survival_binned_ce':
     args.n_classes = 4
-    dataset = Generic_MIL_Dataset(
+    dataset = Generic_MIL_Survival_Dataset(
         csv_path      = args.survival_csv,
         data_dir      = args.data_root_dir,
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
-        label_dict    = {0: 0, 1: 1, 2: 2, 3: 3},
         patient_strat = False,
-        ignore        = []
     )
+
 elif args.task == 'task_5_survival_nll':
     args.n_classes = 4
-    dataset = Generic_MIL_Dataset(
+    dataset = Generic_MIL_Survival_Dataset(
         csv_path      = args.survival_csv,
         data_dir      = args.data_root_dir,
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
-        label_dict    = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7},
         patient_strat = False,
-        ignore        = []
     )
         
 else:
