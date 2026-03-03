@@ -631,3 +631,154 @@ def summary(model, loader, n_classes):
         auc = np.nanmean(np.array(aucs))
 
     return patient_results, test_error, auc, acc_logger
+
+def train_loop_cox(epoch, model, loader, optimizer, args, writer=None):
+    """
+    Training loop for Cox proportional hazards survival model.
+
+    This loop:
+      - Runs the model forward on each bag/patient
+      - Collects predicted risk scores (logits)
+      - Buffers multiple samples together
+      - Computes Cox partial likelihood on the buffered set
+      - Performs a gradient update
+
+    Important:
+    Cox loss requires *multiple patients at once* because each event is
+    evaluated relative to a "risk set" of other patients. That is why
+    we buffer several mini-batches before stepping the optimizer.
+    """
+
+    model.train()  # Set model to training mode (enables dropout, etc.)
+
+    train_loss = 0.   # Accumulate loss across updates
+    n_updates  = 0    # Count how many optimizer steps we take
+
+    # Buffer to temporarily store risk scores and survival info
+    cox_buffer = []
+
+    # Minimum of 2 is required (Cox needs comparisons between patients)
+    cox_batch_size = max(2, args.cox_batch_size)
+
+    for batch_idx, (data, time_to_event, event) in enumerate(loader):
+
+        # Move tensors to GPU/CPU device
+        data          = data.to(device)
+        time_to_event = time_to_event.to(device)
+        event         = event.to(device)
+
+        # Forward pass
+        # logits = model output = log hazard score (NOT probability)
+        logits, _, _, _, _ = model(data)
+
+        # Flatten logits to shape (N,)
+        # Each value is a log hazard score for one patient/bag
+        risk = logits.view(-1)
+
+        # Store current batch predictions and survival info
+        # We cannot compute Cox loss on a single patient —
+        # it must compare multiple patients together.
+        cox_buffer.append((risk,
+                           time_to_event.view(-1),
+                           event.view(-1)))
+
+        # Decide whether to perform an optimizer step
+        # We step when:
+        #   - buffer reaches desired size
+        #   - OR we are at the last batch of the epoch
+        should_step = (
+            len(cox_buffer) >= cox_batch_size
+            or (batch_idx == len(loader) - 1)
+        )
+
+        if should_step:
+
+            # Concatenate buffered predictions into one larger group
+            # This creates a mini-cohort for Cox partial likelihood
+            risk_all  = torch.cat([item[0] for item in cox_buffer], dim=0)
+            time_all  = torch.cat([item[1] for item in cox_buffer], dim=0)
+            event_all = torch.cat([item[2] for item in cox_buffer], dim=0)
+
+            # Compute Cox negative partial log-likelihood
+            loss = cox_ph_loss(risk_all, time_all, event_all)
+
+            # Standard optimization step
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            loss_value  = loss.item()
+            n_updates  += 1
+
+            # Clear buffer after update
+            cox_buffer = []
+
+        else:
+            # If we don't step yet, continue accumulating patients
+            continue
+
+        train_loss += loss_value
+
+        # Print progress every 50 batches
+        if (batch_idx + 1) % 50 == 0:
+            print(f'batch {batch_idx}, train_loss: {loss_value:.4f}')
+
+    # Average loss across optimizer steps (not batches!)
+    train_loss /= max(1, n_updates)
+
+    print(f'Epoch: {epoch}, train_surv_loss: {train_loss:.4f}')
+
+    # Log to TensorBoard if writer is provided
+    if writer:
+        writer.add_scalar('train/surv_loss', train_loss, epoch)
+
+    return train_loss
+
+
+def validate_cox(cur, epoch, model, loader, early_stopping, writer, results_dir):
+    """Validation loop for Cox PH — computes loss and c-index."""
+    model.eval()
+    val_loss = 0.
+    all_risks = []
+    all_times = []
+    all_events = []
+
+    with torch.no_grad():
+        for batch_idx, (data, time_to_event, event) in enumerate(loader):
+            data          = data.to(device, non_blocking=True)
+            time_to_event = time_to_event.to(device, non_blocking=True)
+            event         = event.to(device, non_blocking=True)
+
+            logits, _, _, _, _ = model(data)
+            risk = logits.view(-1)
+
+            # Need at least 2 samples for Cox loss
+            if risk.shape[0] > 1:
+                loss = cox_ph_loss(risk, time_to_event.view(-1), event.view(-1))
+                val_loss += loss.item()
+
+            all_risks.extend(risk.cpu().numpy())
+            all_times.extend(time_to_event.cpu().numpy())
+            all_events.extend(event.cpu().numpy())
+
+    val_loss /= max(1, len(loader))
+
+    try:
+        c_index = concordance_index(all_times, [-r for r in all_risks], all_events)
+    except Exception:
+        c_index = 0.5
+
+    print(f'\nVal Set, val_loss: {val_loss:.4f}, val_c_index: {c_index:.4f}')
+    if writer:
+        writer.add_scalar('val/surv_loss', val_loss, epoch)
+        writer.add_scalar('val/c_index', c_index, epoch)
+
+    if early_stopping:
+        assert results_dir
+        early_stopping(epoch, val_loss, model,
+                       ckpt_name=os.path.join(results_dir, "s_{}_checkpoint.pt".format(cur)))
+        if early_stopping.early_stop:
+            print("Early stopping")
+            return True
+
+    return False
