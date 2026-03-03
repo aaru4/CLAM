@@ -394,21 +394,39 @@ class Generic_Survival_Split(Generic_MIL_Survival_Dataset):
 	def __len__(self):
 		return len(self.slide_data)
 
-class Generic_MIL_Cox_Dataset(Generic_MIL_Dataset):
-    """
-    Returns (features, survival_months, event) for task 6 (Cox PH).
-    Reads 'survival_months' (continuous time) and 'event' (0/1) from CSV.
-    Unlike tasks 4/5 which use binned labels, Cox needs continuous time directly.
-    """
+class Generic_MIL_Cox_Dataset(Dataset):
+    def __init__(self, csv_path, data_dir, shuffle=False, seed=7, print_info=True, patient_strat=False, **kwargs):
+        self.data_dir = data_dir
+        self.use_h5 = False
+        slide_data = pd.read_csv(csv_path)
+        slide_data = slide_data.dropna(subset=['survival_months', 'event'])
+        if shuffle:
+            slide_data = slide_data.sample(frac=1, random_state=seed).reset_index(drop=True)
+        self.slide_data = slide_data
+        if print_info:
+            print(f"Cox dataset: {len(self.slide_data)} slides, event rate: {self.slide_data['event'].mean():.2%}")
+
+    def __len__(self):
+        return len(self.slide_data)
+
+    def return_splits(self, from_id=False, csv_path=None):
+        assert csv_path
+        all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
+        def make_split(key):
+            ids = all_splits[key].dropna().tolist()
+            mask = self.slide_data['slide_id'].isin(ids)
+            df_slice = self.slide_data[mask].reset_index(drop=True)
+            sub = Generic_MIL_Cox_Dataset.__new__(Generic_MIL_Cox_Dataset)
+            sub.slide_data = df_slice
+            sub.data_dir = self.data_dir
+            sub.use_h5 = False
+            return sub
+        return make_split('train'), make_split('val'), make_split('test')
+
     def __getitem__(self, idx):
         slide_id        = self.slide_data['slide_id'][idx]
         survival_months = float(self.slide_data['survival_months'][idx])
         event           = int(self.slide_data['event'][idx])
-        if type(self.data_dir) == dict:
-            source = self.slide_data['source'][idx]
-            data_dir = self.data_dir[source]
-        else:
-            data_dir = self.data_dir
-        full_path = os.path.join(data_dir, 'pt_files', '{}.pt'.format(slide_id))
+        full_path = os.path.join(self.data_dir, 'pt_files', '{}.pt'.format(slide_id))
         features  = torch.load(full_path)
         return features, torch.tensor(survival_months, dtype=torch.float), torch.tensor(event, dtype=torch.float)
