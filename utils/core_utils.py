@@ -188,6 +188,14 @@ def train(datasets, cur, args):
             if stop:
                 break
 
+    elif args.task == 'task_6_survival_cox':
+        for epoch in range(args.max_epochs):
+            train_loop_cox(epoch, model, train_loader, optimizer, args, writer)
+            stop = validate_cox(cur, epoch, model, val_loader,
+                                early_stopping, writer, args.results_dir)
+            if stop:
+                break
+
     # ── Standard classification tasks ────────────────────────────────────────
     else:
         for epoch in range(args.max_epochs):
