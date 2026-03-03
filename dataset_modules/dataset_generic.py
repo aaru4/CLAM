@@ -393,3 +393,22 @@ class Generic_Survival_Split(Generic_MIL_Survival_Dataset):
 
 	def __len__(self):
 		return len(self.slide_data)
+
+class Generic_MIL_Cox_Dataset(Generic_MIL_Dataset):
+    """
+    Returns (features, survival_months, event) for task 6 (Cox PH).
+    Reads 'survival_months' (continuous time) and 'event' (0/1) from CSV.
+    Unlike tasks 4/5 which use binned labels, Cox needs continuous time directly.
+    """
+    def __getitem__(self, idx):
+        slide_id        = self.slide_data['slide_id'][idx]
+        survival_months = float(self.slide_data['survival_months'][idx])
+        event           = int(self.slide_data['event'][idx])
+        if type(self.data_dir) == dict:
+            source = self.slide_data['source'][idx]
+            data_dir = self.data_dir[source]
+        else:
+            data_dir = self.data_dir
+        full_path = os.path.join(data_dir, 'pt_files', '{}.pt'.format(slide_id))
+        features  = torch.load(full_path)
+        return features, torch.tensor(survival_months, dtype=torch.float), torch.tensor(event, dtype=torch.float)
