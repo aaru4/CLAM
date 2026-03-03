@@ -219,7 +219,6 @@ elif args.task == 'task_6_survival_cox':
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
-        label_dict    = {0: 0},   # dummy -  Cox doesn't use label_dict but parent class requires it
         patient_strat = False,
         ignore        = []
     )
