@@ -53,6 +53,30 @@ elif args.task == 'task_3_prog_vs_noprog':
         ignore = []
     )
 
+elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
+    args.n_classes = 4
+    dataset = Generic_WSI_Classification_Dataset(
+        csv_path      = '/home/jupyter/her2low_project/her2low_survival_cohort.csv',
+        shuffle       = False,
+        seed          = args.seed,
+        print_info    = True,
+        label_dict    = {0: 0, 1: 1, 2: 2, 3: 3},
+        patient_strat = False,
+        ignore        = []
+    )
+
+elif args.task == 'task_6_survival_cox':
+    args.n_classes = 1
+    dataset = Generic_WSI_Classification_Dataset(
+        csv_path      = '/home/jupyter/her2low_project/her2low_survival_cohort.csv',
+        shuffle       = False,
+        seed          = args.seed,
+        print_info    = True,
+        label_dict    = {0: 0},
+        patient_strat = False,
+        ignore        = []
+    )
+
 else:
     raise NotImplementedError
 
