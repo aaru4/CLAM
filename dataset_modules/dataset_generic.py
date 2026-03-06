@@ -326,17 +326,25 @@ class Generic_MIL_Survival_Dataset(Generic_WSI_Classification_Dataset):
 	Reads 'label' (bin index 0-3) and 'event' (0/1) as separate CSV columns.
 	Skips rows where label or event is NaN.
 	"""
-	def __init__(self, data_dir, **kwargs):
-		# Pass a dummy label_dict so parent init doesn't crash — we override df_prep
-		kwargs.setdefault('label_dict', {0:0, 1:1, 2:2, 3:3})
-		super(Generic_MIL_Survival_Dataset, self).__init__(**kwargs)
-		self.data_dir = data_dir
-		self.use_h5 = False
 
-		# Drop rows where label or event is missing
-		self.slide_data = self.slide_data.dropna(subset=['label', 'event']).reset_index(drop=True)
-		self.slide_data['label'] = self.slide_data['label'].astype(int)
-		self.slide_data['event'] = self.slide_data['event'].astype(int)
+    @staticmethod
+    def df_prep(data, label_dict, ignore, label_col):
+        # Drop rows with missing label — no label mapping needed for survival
+        data = data.dropna(subset=['label']).reset_index(drop=True)
+        data['label'] = data['label'].astype(int)
+        return data
+
+    def __init__(self, data_dir, **kwargs):
+        # Pass a dummy label_dict so parent init doesn't crash — we override df_prep
+        kwargs.setdefault('label_dict', {0:0, 1:1, 2:2, 3:3})
+        super(Generic_MIL_Survival_Dataset, self).__init__(**kwargs)
+        self.data_dir = data_dir
+        self.use_h5 = False
+        # Drop rows where label or event is missing
+        self.slide_data = self.slide_data.dropna(subset=['label', 'event']).reset_index(drop=True)
+        self.slide_data['label'] = self.slide_data['label'].astype(int)
+        self.slide_data['event'] = self.slide_data['event'].astype(int)
+
 
 	def __getitem__(self, idx):
 		slide_id = self.slide_data['slide_id'].iloc[idx]
