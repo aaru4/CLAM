@@ -195,33 +195,35 @@ class Generic_WSI_Classification_Dataset(Dataset):
 		
 		return split
 
-	def return_splits(self, from_id=True, csv_path=None):
-		if from_id:
-			if len(self.train_ids) > 0:
-				train_data = self.slide_data.loc[self.train_ids].reset_index(drop=True)
-				train_split = Generic_Split(train_data, data_dir=self.data_dir, num_classes=self.num_classes)
-			else:
-				train_split = None
-			
-			if len(self.val_ids) > 0:
-				val_data = self.slide_data.loc[self.val_ids].reset_index(drop=True)
-				val_split = Generic_Split(val_data, data_dir=self.data_dir, num_classes=self.num_classes)
-			else:
-				val_split = None
-			
-			if len(self.test_ids) > 0:
-				test_data = self.slide_data.loc[self.test_ids].reset_index(drop=True)
-				test_split = Generic_Split(test_data, data_dir=self.data_dir, num_classes=self.num_classes)
-			else:
-				test_split = None
-		else:
-			assert csv_path 
-			all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
-			train_split = self.get_split_from_df(all_splits, 'train')
-			val_split = self.get_split_from_df(all_splits, 'val')
-			test_split = self.get_split_from_df(all_splits, 'test')
-			
-		return train_split, val_split, test_split
+def return_splits(self, from_id=True, csv_path=None):
+    if from_id:
+        if len(self.train_ids) > 0:
+            train_data = self.slide_data.loc[self.train_ids].reset_index(drop=True)
+            train_split = Generic_Survival_Split(train_data, data_dir=self.data_dir, num_classes=self.num_classes)
+        else:
+            train_split = None
+
+        if len(self.val_ids) > 0:
+            val_data = self.slide_data.loc[self.val_ids].reset_index(drop=True)
+            val_split = Generic_Survival_Split(val_data, data_dir=self.data_dir, num_classes=self.num_classes)
+        else:
+            val_split = None
+
+        if len(self.test_ids) > 0:
+            test_data = self.slide_data.loc[self.test_ids].reset_index(drop=True)
+            test_split = Generic_Survival_Split(test_data, data_dir=self.data_dir, num_classes=self.num_classes)
+        else:
+            test_split = None
+
+        return train_split, val_split, test_split
+
+    else:
+        assert csv_path
+        all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
+        train_split = self._get_survival_split(all_splits, 'train')
+        val_split   = self._get_survival_split(all_splits, 'val')
+        test_split  = self._get_survival_split(all_splits, 'test')
+        return train_split, val_split, test_split
 
 	def get_list(self, ids):
 		return self.slide_data['slide_id'][ids]
