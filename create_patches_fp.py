@@ -63,6 +63,7 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 	# Pick largest file per study, filtered to studies in cohort CSV
 	slides = []
 	slide_full_paths = {}
+	cohort_csv=args.cohort_csv
 	if cohort_csv is not None:
 	    df_cohort = pd.read_csv(cohort_csv)
 	    valid_studies = set(str(r).split('/')[0].strip() for r in df_cohort['dicom'].dropna())
@@ -280,6 +281,8 @@ parser.add_argument('--preset', default=None, type=str,
 					help='predefined profile of default segmentation and filter parameters (.csv)')
 parser.add_argument('--patch_level', type=int, default=0, 
 					help='downsample level at which to patch')
+parser.add_argument('--cohort_csv', type=str, default=None,
+                    help='CSV with dicom column (StudyUID/DicomUID) to filter and select one slide per study')
 parser.add_argument('--process_list',  type = str, default=None,
 					help='name of list of images to process with parameters (.csv)')
 
