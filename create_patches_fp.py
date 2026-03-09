@@ -58,13 +58,20 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 				  stitch= False, 
 				  patch = False, auto_skip=True, process_list = None):
 	
-
-
-	slides = sorted(os.listdir(source))
-	slides = [slide for slide in slides if os.path.isfile(os.path.join(source, slide))]
-	if process_list is None:
-		df = initialize_df(slides, seg_params, filter_params, vis_params, patch_params)
 	
+	# Support nested structures (StudyUID/SeriesUID/DicomUID.dcm)
+	slides = []
+	slide_full_paths = {}
+	for root, dirs, files in os.walk(source):
+	    for fname in files:
+	        full = os.path.join(root, fname)
+	        if os.path.isfile(full):
+	            slides.append(fname)
+	            slide_full_paths[fname] = full
+	slides = sorted(slides)
+	if process_list is None:
+	    df = initialize_df(slides, seg_params, filter_params, vis_params, patch_params)
+		
 	else:
 		df = pd.read_csv(process_list)
 		df = initialize_df(df, seg_params, filter_params, vis_params, patch_params)
