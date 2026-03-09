@@ -112,7 +112,7 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 		# Wrap the entire slide processing in try/catch
 		try:
 			# Inialize WSI
-			full_path = os.path.join(source, slide)
+			full_path = slide_full_paths.get(slide, os.path.join(source, slide))
 			WSI_object = WholeSlideImage(full_path)
 
 			if use_default_params:
