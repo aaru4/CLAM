@@ -60,15 +60,35 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 	
 	
 	# Support nested structures (StudyUID/SeriesUID/DicomUID.dcm)
+	# Pick largest file per study, filtered to studies in cohort CSV
 	slides = []
 	slide_full_paths = {}
-	for root, dirs, files in os.walk(source):
-	    for fname in files:
-	        full = os.path.join(root, fname)
-	        if os.path.isfile(full):
-	            slides.append(fname)
-	            slide_full_paths[fname] = full
+	if cohort_csv is not None:
+	    df_cohort = pd.read_csv(cohort_csv)
+	    valid_studies = set(str(r).split('/')[0].strip() for r in df_cohort['dicom'].dropna())
+	else:
+	    valid_studies = None
+	
+	for study_dir in sorted(os.scandir(source), key=lambda e: e.name):
+	    if not study_dir.is_dir():
+	        continue
+	    if valid_studies is not None and study_dir.name not in valid_studies:
+	        continue
+	    candidates = []
+	    for root, dirs, files in os.walk(study_dir.path):
+	        for fname in files:
+	            full = os.path.join(root, fname)
+	            try:
+	                candidates.append((os.path.getsize(full), fname, full))
+	            except OSError:
+	                continue
+	    if not candidates:
+	        continue
+	    _, fname, full = max(candidates, key=lambda x: x[0])
+	    slides.append(fname)
+	    slide_full_paths[fname] = full
 	slides = sorted(slides)
+
 	if process_list is None:
 	    df = initialize_df(slides, seg_params, filter_params, vis_params, patch_params)
 		
