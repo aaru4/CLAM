@@ -163,6 +163,7 @@ class Generic_WSI_Classification_Dataset(Dataset):
 					slide_indices = self.slide_data[self.slide_data['case_id'] == case_id].index.tolist()
 					slide_ids[split].extend(slide_indices)
 			self.train_ids, self.val_ids, self.test_ids = slide_ids[0], slide_ids[1], slide_ids[2]
+
 		else:
 			self.train_ids, self.val_ids, self.test_ids = ids
 
@@ -195,35 +196,33 @@ class Generic_WSI_Classification_Dataset(Dataset):
 		
 		return split
 
-def return_splits(self, from_id=True, csv_path=None):
-    if from_id:
-        if len(self.train_ids) > 0:
-            train_data = self.slide_data.loc[self.train_ids].reset_index(drop=True)
-            train_split = Generic_Survival_Split(train_data, data_dir=self.data_dir, num_classes=self.num_classes)
-        else:
-            train_split = None
-
-        if len(self.val_ids) > 0:
-            val_data = self.slide_data.loc[self.val_ids].reset_index(drop=True)
-            val_split = Generic_Survival_Split(val_data, data_dir=self.data_dir, num_classes=self.num_classes)
-        else:
-            val_split = None
-
-        if len(self.test_ids) > 0:
-            test_data = self.slide_data.loc[self.test_ids].reset_index(drop=True)
-            test_split = Generic_Survival_Split(test_data, data_dir=self.data_dir, num_classes=self.num_classes)
-        else:
-            test_split = None
-
-        return train_split, val_split, test_split
-
-    else:
-        assert csv_path
-        all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
-        train_split = self._get_survival_split(all_splits, 'train')
-        val_split   = self._get_survival_split(all_splits, 'val')
-        test_split  = self._get_survival_split(all_splits, 'test')
-        return train_split, val_split, test_split
+	def return_splits(self, from_id=True, csv_path=None):
+		if from_id:
+			if len(self.train_ids) > 0:
+				train_data = self.slide_data.loc[self.train_ids].reset_index(drop=True)
+				train_split = Generic_Split(train_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				train_split = None
+			
+			if len(self.val_ids) > 0:
+				val_data = self.slide_data.loc[self.val_ids].reset_index(drop=True)
+				val_split = Generic_Split(val_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				val_split = None
+			
+			if len(self.test_ids) > 0:
+				test_data = self.slide_data.loc[self.test_ids].reset_index(drop=True)
+				test_split = Generic_Split(test_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				test_split = None
+		else:
+			assert csv_path 
+			all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
+			train_split = self.get_split_from_df(all_splits, 'train')
+			val_split = self.get_split_from_df(all_splits, 'val')
+			test_split = self.get_split_from_df(all_splits, 'test')
+			
+		return train_split, val_split, test_split
 
 	def get_list(self, ids):
 		return self.slide_data['slide_id'][ids]
@@ -235,10 +234,12 @@ def return_splits(self, from_id=True, csv_path=None):
 		return None
 
 	def test_split_gen(self, return_descriptor=False):
+
 		if return_descriptor:
 			index = [list(self.label_dict.keys())[list(self.label_dict.values()).index(i)] for i in range(self.num_classes)]
 			columns = ['train', 'val', 'test']
-			df = pd.DataFrame(np.full((len(index), len(columns)), 0, dtype=np.int32), index=index, columns=columns)
+			df = pd.DataFrame(np.full((len(index), len(columns)), 0, dtype=np.int32), index= index,
+							columns= columns)
 
 		count = len(self.train_ids)
 		print('\nnumber of training samples: {}'.format(count))
@@ -284,6 +285,7 @@ def return_splits(self, from_id=True, csv_path=None):
 		df = pd.concat([df_tr, df_v, df_t], axis=1) 
 		df.to_csv(filename, index = False)
 
+
 class Generic_MIL_Dataset(Generic_WSI_Classification_Dataset):
 	def __init__(self,
 		data_dir, 
@@ -310,13 +312,16 @@ class Generic_MIL_Dataset(Generic_WSI_Classification_Dataset):
 				full_path = os.path.join(data_dir, 'pt_files', '{}.pt'.format(slide_id))
 				features = torch.load(full_path)
 				return features, label
+			
 			else:
 				return slide_id, label
+
 		else:
 			full_path = os.path.join(data_dir,'h5_files','{}.h5'.format(slide_id))
 			with h5py.File(full_path,'r') as hdf5_file:
 				features = hdf5_file['features'][:]
 				coords = hdf5_file['coords'][:]
+
 			features = torch.from_numpy(features)
 			return features, label, coords
 
@@ -346,7 +351,6 @@ class Generic_MIL_Survival_Dataset(Generic_WSI_Classification_Dataset):
 		self.slide_data['label'] = self.slide_data['label'].astype(int)
 		self.slide_data['event'] = self.slide_data['event'].astype(int)
 
-
 	def __getitem__(self, idx):
 		slide_id = self.slide_data['slide_id'].iloc[idx]
 		label    = int(self.slide_data['label'].iloc[idx])
@@ -359,12 +363,34 @@ class Generic_MIL_Survival_Dataset(Generic_WSI_Classification_Dataset):
 		return features, torch.tensor([label, event], dtype=torch.long)
 
 	def return_splits(self, from_id=True, csv_path=None):
-		assert csv_path
-		all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
-		train_split = self._get_survival_split(all_splits, 'train')
-		val_split   = self._get_survival_split(all_splits, 'val')
-		test_split  = self._get_survival_split(all_splits, 'test')
-		return train_split, val_split, test_split
+		if from_id:
+			if len(self.train_ids) > 0:
+				train_data = self.slide_data.loc[self.train_ids].reset_index(drop=True)
+				train_split = Generic_Survival_Split(train_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				train_split = None
+
+			if len(self.val_ids) > 0:
+				val_data = self.slide_data.loc[self.val_ids].reset_index(drop=True)
+				val_split = Generic_Survival_Split(val_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				val_split = None
+
+			if len(self.test_ids) > 0:
+				test_data = self.slide_data.loc[self.test_ids].reset_index(drop=True)
+				test_split = Generic_Survival_Split(test_data, data_dir=self.data_dir, num_classes=self.num_classes)
+			else:
+				test_split = None
+
+			return train_split, val_split, test_split
+
+		else:
+			assert csv_path
+			all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
+			train_split = self._get_survival_split(all_splits, 'train')
+			val_split   = self._get_survival_split(all_splits, 'val')
+			test_split  = self._get_survival_split(all_splits, 'test')
+			return train_split, val_split, test_split
 
 	def _get_survival_split(self, all_splits, split_key):
 		split = all_splits[split_key].dropna().reset_index(drop=True)
@@ -403,39 +429,40 @@ class Generic_Survival_Split(Generic_MIL_Survival_Dataset):
 	def __len__(self):
 		return len(self.slide_data)
 
+
 class Generic_MIL_Cox_Dataset(Dataset):
-    def __init__(self, csv_path, data_dir, shuffle=False, seed=7, print_info=True, patient_strat=False, **kwargs):
-        self.data_dir = data_dir
-        self.use_h5 = False
-        slide_data = pd.read_csv(csv_path)
-        slide_data = slide_data.dropna(subset=['survival_months', 'event'])
-        if shuffle:
-            slide_data = slide_data.sample(frac=1, random_state=seed).reset_index(drop=True)
-        self.slide_data = slide_data
-        if print_info:
-            print(f"Cox dataset: {len(self.slide_data)} slides, event rate: {self.slide_data['event'].mean():.2%}")
+	def __init__(self, csv_path, data_dir, shuffle=False, seed=7, print_info=True, patient_strat=False, **kwargs):
+		self.data_dir = data_dir
+		self.use_h5 = False
+		slide_data = pd.read_csv(csv_path)
+		slide_data = slide_data.dropna(subset=['survival_months', 'event'])
+		if shuffle:
+			slide_data = slide_data.sample(frac=1, random_state=seed).reset_index(drop=True)
+		self.slide_data = slide_data
+		if print_info:
+			print(f"Cox dataset: {len(self.slide_data)} slides, event rate: {self.slide_data['event'].mean():.2%}")
 
-    def __len__(self):
-        return len(self.slide_data)
+	def __len__(self):
+		return len(self.slide_data)
 
-    def return_splits(self, from_id=False, csv_path=None):
-        assert csv_path
-        all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
-        def make_split(key):
-            ids = all_splits[key].dropna().tolist()
-            mask = self.slide_data['slide_id'].isin(ids)
-            df_slice = self.slide_data[mask].reset_index(drop=True)
-            sub = Generic_MIL_Cox_Dataset.__new__(Generic_MIL_Cox_Dataset)
-            sub.slide_data = df_slice
-            sub.data_dir = self.data_dir
-            sub.use_h5 = False
-            return sub
-        return make_split('train'), make_split('val'), make_split('test')
+	def return_splits(self, from_id=False, csv_path=None):
+		assert csv_path
+		all_splits = pd.read_csv(csv_path, dtype=self.slide_data['slide_id'].dtype)
+		def make_split(key):
+			ids = all_splits[key].dropna().tolist()
+			mask = self.slide_data['slide_id'].isin(ids)
+			df_slice = self.slide_data[mask].reset_index(drop=True)
+			sub = Generic_MIL_Cox_Dataset.__new__(Generic_MIL_Cox_Dataset)
+			sub.slide_data = df_slice
+			sub.data_dir = self.data_dir
+			sub.use_h5 = False
+			return sub
+		return make_split('train'), make_split('val'), make_split('test')
 
-    def __getitem__(self, idx):
-        slide_id        = self.slide_data['slide_id'][idx]
-        survival_months = float(self.slide_data['survival_months'][idx])
-        event           = int(self.slide_data['event'][idx])
-        full_path = os.path.join(self.data_dir, 'pt_files', '{}.pt'.format(slide_id))
-        features  = torch.load(full_path)
-        return features, torch.tensor(survival_months, dtype=torch.float), torch.tensor(event, dtype=torch.float)
+	def __getitem__(self, idx):
+		slide_id        = self.slide_data['slide_id'][idx]
+		survival_months = float(self.slide_data['survival_months'][idx])
+		event           = int(self.slide_data['event'][idx])
+		full_path = os.path.join(self.data_dir, 'pt_files', '{}.pt'.format(slide_id))
+		features  = torch.load(full_path)
+		return features, torch.tensor(survival_months, dtype=torch.float), torch.tensor(event, dtype=torch.float)
