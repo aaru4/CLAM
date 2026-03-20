@@ -58,31 +58,27 @@ args = parser.parse_args()
 def build_slide_path_lookup(data_slide_dir, cohort_csv=None):
     """
     Walk data_slide_dir/study/series/*.dcm, pick largest file per series.
-    Returns dict: {series_uid: full_path_to_largest_dcm}
-    Optionally filtered to series UIDs present in cohort_csv['dicom'].
+    Returns dict: {dcm_filename_stem: full_path}  ← keyed by instance UID
     """
-    # Get valid series UIDs from cohort CSV (level2 = part after '/')
-    valid_series = None
+    valid_studies = None
     if cohort_csv is not None:
         df = pd.read_csv(cohort_csv)
-        valid_series = set(
-            str(r).split('/')[-1].strip()
+        valid_studies = set(
+            str(r).split('/')[0].strip()
             for r in df['dicom'].dropna()
         )
-        print(f"Cohort CSV: {len(valid_series)} unique series UIDs")
+        print(f"Cohort CSV: {len(valid_studies)} unique study UIDs")
 
     lookup = {}
     print("Building slide path lookup (walking nested dirs)...")
     for study_entry in os.scandir(data_slide_dir):
         if not study_entry.is_dir():
             continue
+        if valid_studies is not None and study_entry.name not in valid_studies:
+            continue
         for series_entry in os.scandir(study_entry.path):
             if not series_entry.is_dir():
                 continue
-            series_uid = series_entry.name
-            if valid_series is not None and series_uid not in valid_series:
-                continue
-            # Pick largest file in this series dir
             candidates = []
             for f in os.scandir(series_entry.path):
                 if f.is_file():
@@ -92,12 +88,13 @@ def build_slide_path_lookup(data_slide_dir, cohort_csv=None):
                         continue
             if candidates:
                 _, best_path = max(candidates, key=lambda x: x[0])
-                lookup[series_uid] = best_path
+                # Key by filename stem (instance UID) — matches h5/slide_id naming
+                stem = os.path.splitext(os.path.basename(best_path))[0]
+                lookup[stem] = best_path
 
-    print(f"Lookup built: {len(lookup)} series found")
+    print(f"Lookup built: {len(lookup)} slides found")
     return lookup
-
-
+	
 def worker_init_fn(worker_id):
 	worker_info = torch.utils.data.get_worker_info()
 	dataset = worker_info.dataset
