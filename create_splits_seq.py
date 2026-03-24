@@ -44,7 +44,7 @@ elif args.task == 'task_2_tumor_subtyping':
 elif args.task == 'task_3_prog_vs_noprog':
     args.n_classes=2
     dataset = Generic_WSI_Classification_Dataset(
-        csv_path = '/home/jupyter/her2low_cohort_for_clam.csv',
+        csv_path = '/home/jupyter/her2low_project/her2low_final.csv',
         shuffle = False,
         seed = args.seed,
         print_info = True,
@@ -57,7 +57,7 @@ elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
     args.n_classes = 4
     from dataset_modules.dataset_generic import Generic_MIL_Survival_Dataset
     dataset = Generic_MIL_Survival_Dataset(
-        csv_path      = '/home/jupyter/her2low_project/her2low_survival_cohort.csv',
+        csv_path      = '/home/jupyter/her2low_project/her2low_final.csv',
         data_dir      = None,
         shuffle       = False,
         seed          = args.seed,
@@ -68,7 +68,7 @@ elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
 elif args.task == 'task_6_survival_cox':
     args.n_classes = 1
     dataset = Generic_WSI_Classification_Dataset(
-        csv_path      = '/home/jupyter/her2low_project/aaru_task4_survival_cohort.csv',
+        csv_path      = '/home/jupyter/her2low_project/her2low_final.csv',
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
