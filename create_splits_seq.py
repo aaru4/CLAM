@@ -44,7 +44,7 @@ elif args.task == 'task_2_tumor_subtyping':
 elif args.task == 'task_3_prog_vs_noprog':
     args.n_classes=2
     dataset = Generic_WSI_Classification_Dataset(
-        csv_path = '/home/jupyter/her2low_project/her2low_final.csv',
+        csv_path = '/home/jupyter/her2low_project/her2low_task3.csv',
         shuffle = False,
         seed = args.seed,
         print_info = True,
@@ -52,7 +52,7 @@ elif args.task == 'task_3_prog_vs_noprog':
         patient_strat = False,
         ignore = []
     )
-  
+
 elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
     args.n_classes = 4
     from dataset_modules.dataset_generic import Generic_MIL_Survival_Dataset
@@ -67,14 +67,14 @@ elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
 
 elif args.task == 'task_6_survival_cox':
     args.n_classes = 1
-    dataset = Generic_WSI_Classification_Dataset(
+    from dataset_modules.dataset_generic import Generic_MIL_Cox_Dataset
+    dataset = Generic_MIL_Cox_Dataset(
         csv_path      = '/home/jupyter/her2low_project/her2low_final.csv',
+        data_dir      = None,
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
-        label_dict    = {0: 0},
         patient_strat = False,
-        ignore        = []
     )
 
 else:
