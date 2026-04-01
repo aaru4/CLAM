@@ -57,7 +57,7 @@ elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
     args.n_classes = 4
     from dataset_modules.dataset_generic import Generic_MIL_Survival_Dataset
     dataset = Generic_MIL_Survival_Dataset(
-        csv_path      = '/home/jupyter/her2low_project/her2low_final.csv',
+        csv_path      = '/home/jupyter/her2low_project/her2low_survival.csv',
         data_dir      = None,
         shuffle       = False,
         seed          = args.seed,
