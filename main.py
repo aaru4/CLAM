@@ -94,6 +94,9 @@ parser.add_argument('--inst_loss', type=str, choices=['svm', 'ce', None], defaul
 parser.add_argument('--subtyping', action='store_true', default=False)
 parser.add_argument('--bag_weight', type=float, default=0.7)
 parser.add_argument('--B', type=int, default=8)
+parser.add_argument('--cohort_csv', type=str, default=None,
+                    help='override task-specific CSV path')
+parser.add_argument('--survival_csv', type=str, default='/home/jupyter/her2low_project/her2low_survival.csv')
 args = parser.parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -154,8 +157,9 @@ elif args.task == 'task_2_tumor_subtyping':
 
 elif args.task == 'task_3_prog_vs_noprog':
     args.n_classes = 2
+    _csv = args.cohort_csv or '/home/jupyter/her2low_project/her2low_task3.csv'
     dataset = Generic_MIL_Dataset(
-        csv_path='/home/jupyter/her2low_project/her2low_task3.csv',
+        csv_path=_csv,
         data_dir=args.data_root_dir,
         shuffle=False, seed=args.seed, print_info=True,
         label_dict={'no_progression': 0, 'progression': 1},
@@ -163,27 +167,30 @@ elif args.task == 'task_3_prog_vs_noprog':
 
 elif args.task == 'task_4_survival_binned_ce':
     args.n_classes = 4
+    _csv = args.cohort_csv or args.survival_csv
     dataset = Generic_MIL_Survival_Dataset(
-        csv_path=args.survival_csv,
+        csv_path=_csv,
         data_dir=args.data_root_dir,
         shuffle=False, seed=args.seed, print_info=True,
         patient_strat=False)
 
 elif args.task == 'task_5_survival_nll':
     args.n_classes = 4
+    _csv = args.cohort_csv or args.survival_csv
     dataset = Generic_MIL_Survival_Dataset(
-        csv_path=args.survival_csv,
+        csv_path=_csv,
         data_dir=args.data_root_dir,
         shuffle=False, seed=args.seed, print_info=True,
         patient_strat=False)
 
 elif args.task == 'task_6_survival_cox':
     args.n_classes = 1
+    _csv = args.cohort_csv or args.survival_csv
     dataset = Generic_MIL_Cox_Dataset(
-        csv_path=args.survival_csv,
+        csv_path=_csv,
         data_dir=args.data_root_dir,
         shuffle=False, seed=args.seed, print_info=True)
-
+    
 else:
     raise NotImplementedError
 
