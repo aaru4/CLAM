@@ -4,6 +4,7 @@ import torch.nn as nn
 from utils.survival_utils import survival_ce_loss, survival_nll_loss
 from utils.utils import *
 import os
+from utils.utils import collate_MIL_survival
 from dataset_modules.dataset_generic import save_splits
 from models.model_mil import MIL_fc, MIL_fc_mc
 from models.model_clam import CLAM_MB, CLAM_SB
@@ -93,6 +94,11 @@ def train(datasets, cur, args):
     else:
         writer = None
 
+    if args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
+        _collate = collate_MIL_survival
+    else:
+        _collate = collate_MIL
+    
     print('\nInit train/val/test splits...', end=' ')
     train_split, val_split, test_split = datasets
     save_splits(datasets, ['train', 'val', 'test'], os.path.join(args.results_dir, 'splits_{}.csv'.format(cur)))
@@ -153,9 +159,9 @@ def train(datasets, cur, args):
     print('Done!')
 
     print('\nInit Loaders...', end=' ')
-    train_loader = get_split_loader(train_split, training=True, testing=args.testing, weighted=args.weighted_sample)
-    val_loader = get_split_loader(val_split, testing=args.testing)
-    test_loader = get_split_loader(test_split, testing=args.testing)
+    train_loader = get_split_loader(train_split, training=True, testing=args.testing, weighted=args.weighted_sample, collate_fn=_collate)
+    val_loader = get_split_loader(val_split, testing=args.testing, collate_fn=_collate)
+    test_loader = get_split_loader(test_split, testing=args.testing, collate_fn=_collate)
     print('Done!')
 
     print('\nSetup EarlyStopping...', end=' ')
