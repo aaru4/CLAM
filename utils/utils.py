@@ -37,6 +37,11 @@ def collate_MIL(batch):
 	label = torch.LongTensor([item[1] for item in batch])
 	return [img, label]
 
+def collate_MIL_survival(batch):
+    img = torch.cat([item[0] for item in batch], dim=0)
+    label = torch.stack([item[1] for item in batch], dim=0)  # item[1] is tensor([bin, event])
+    return [img, label]
+
 def collate_features(batch):
 	img = torch.cat([item[0] for item in batch], dim = 0)
 	coords = np.vstack([item[1] for item in batch])
