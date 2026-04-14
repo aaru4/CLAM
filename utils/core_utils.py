@@ -222,10 +222,13 @@ def train(datasets, cur, args):
         model.load_state_dict(torch.load(os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur))))
     else:
         torch.save(model.state_dict(), os.path.join(args.results_dir, "s_{}_checkpoint.pt".format(cur)))
-
+    
+    if args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll', 'task_6_survival_cox']:
+        return {}, 0.0, 0.0, 0.0, 0.0
+    
     _, val_error, val_auc, _ = summary(model, val_loader, args.n_classes)
     print('Val error: {:.4f}, ROC AUC: {:.4f}'.format(val_error, val_auc))
-
+    
     results_dict, test_error, test_auc, acc_logger = summary(model, test_loader, args.n_classes)
     print('Test error: {:.4f}, ROC AUC: {:.4f}'.format(test_error, test_auc))
 
