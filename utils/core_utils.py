@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from utils.survival_utils import survival_ce_loss, survival_nll_loss
+from utils.survival_utils import survival_ce_loss, survival_nll_loss, cox_ph_loss
 from utils.utils import *
 import os
 from utils.utils import collate_MIL_survival
