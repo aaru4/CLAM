@@ -69,13 +69,12 @@ elif args.task == 'task_6_survival_cox':
     args.n_classes = 1
     from dataset_modules.dataset_generic import Generic_MIL_Survival_Dataset
     dataset = Generic_MIL_Survival_Dataset(
-        csv_path      = '/home/jupyter/her2low_project/her2low_cox.csv',
+        csv_path      = '/home/jupyter/her2low_project/her2low_survival.csv',
         data_dir      = None,
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
         patient_strat = False,
-        label_dict    = {0: 0},
     )
 
 else:
