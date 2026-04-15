@@ -4,7 +4,7 @@ import torch.nn as nn
 from utils.survival_utils import survival_ce_loss, survival_nll_loss, cox_ph_loss
 from utils.utils import *
 import os
-from utils.utils import collate_MIL_survival
+from utils.utils import collate_MIL, collate_MIL_survival, collate_MIL_cox
 from dataset_modules.dataset_generic import save_splits
 from models.model_mil import MIL_fc, MIL_fc_mc
 from models.model_clam import CLAM_MB, CLAM_SB
