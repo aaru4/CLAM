@@ -67,14 +67,15 @@ elif args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
 
 elif args.task == 'task_6_survival_cox':
     args.n_classes = 1
-    from dataset_modules.dataset_generic import Generic_MIL_Cox_Dataset
-    dataset = Generic_MIL_Cox_Dataset(
-        csv_path      = '/home/jupyter/her2low_project/her2low_final.csv',
+    from dataset_modules.dataset_generic import Generic_MIL_Survival_Dataset
+    dataset = Generic_MIL_Survival_Dataset(
+        csv_path      = '/home/jupyter/her2low_project/her2low_cox.csv',
         data_dir      = None,
         shuffle       = False,
         seed          = args.seed,
         print_info    = True,
         patient_strat = False,
+        label_dict    = {0: 0},
     )
 
 else:
