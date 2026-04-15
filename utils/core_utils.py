@@ -96,6 +96,8 @@ def train(datasets, cur, args):
 
     if args.task in ['task_4_survival_binned_ce', 'task_5_survival_nll']:
         _collate = collate_MIL_survival
+    elif args.task == 'task_6_survival_cox':
+        _collate = collate_MIL_cox
     else:
         _collate = collate_MIL
     
